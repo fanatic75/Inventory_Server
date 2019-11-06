@@ -6,15 +6,18 @@ const adminService = require('./admin.service');
 router.post('/authenticate', authenticate);
 router.post('/register', register);
 router.get('/', getAll);
-router.get('/current', getCurrent);
-router.get('/:id', getById);
 router.put('/:id', update);
 router.delete('/:id', _delete);
+
+
+
+router.get('/current', getCurrent);
+router.get('/:id', getById);
 
 module.exports = router;
 
 function authenticate(req, res, next) {
-    console.log(req.user);
+
     userService.authenticate(req.body)
         .then(user => user ? res.json(user) : res.status(400).json({
             message: 'Username or password is incorrect'
@@ -23,18 +26,16 @@ function authenticate(req, res, next) {
 }
 
 function register(req, res, next) {
-    console.log(req.user);
-    adminService.isAdmin(req.user.sub)
+
+    adminService.isAdmin(req.user)
         .then((result) => {
             if (result) {
                 userService.create(req.body)
-                    .then(() => res.json({}))
+                    .then(() => res.json({message:"User Created"}))
                     .catch(err => next(err));
 
-            }
-            else{
-                console.log("not an admin");
-                res.sendStatus(401);
+            } else {
+                throw "Not an admin."
             }
         })
         .catch(err => next(err));
@@ -43,33 +44,75 @@ function register(req, res, next) {
 
 }
 
-function getAll(req, res, next) {
-
-    userService.getAll()
-        .then(users => res.json(users))
-        .catch(err => next(err));
-}
 
 function getCurrent(req, res, next) {
+    //no need for admin
+
     userService.getById(req.user.sub)
         .then(user => user ? res.json(user) : res.sendStatus(404))
         .catch(err => next(err));
 }
 
-function getById(req, res, next) {
-    userService.getById(req.params.id)
-        .then(user => user ? res.json(user) : res.sendStatus(404))
+
+function getAll(req, res, next) {
+
+    adminService.isAdmin(req.user)
+        .then((result) => {
+            if (result) {
+                userService.getAll()
+                    .then(users => res.json(users))
+                    .catch(err => next(err));
+            } else {
+                throw "Not an Admin"
+            }
+        })
         .catch(err => next(err));
 }
 
+
 function update(req, res, next) {
-    userService.update(req.params.id, req.body)
-        .then(() => res.json({}))
+    adminService.isAdmin(req.user)
+        .then((result) => {
+            if (result) {
+                userService.update(req.params.id, req.body)
+                    .then(() => res.json({message:"user updated"}))
+                    .catch(err => next(err));
+            } else {
+                throw "Not an Admin"
+            }
+        })
         .catch(err => next(err));
 }
 
 function _delete(req, res, next) {
-    userService.delete(req.params.id)
-        .then(() => res.json({}))
+    adminService.isAdmin(req.user)
+        .then((result) => {
+            if (result) {
+                userService.delete(req.params.id)
+                    .then(() => res.json({}))
+                    .catch(err => next(err));
+            } else {
+                throw "Not an Admin"
+            }
+        })
         .catch(err => next(err));
+
+}
+
+
+function getById(req, res, next) {
+    adminService.isAdmin(req.user)
+        .then((result) => {
+            if (result) {
+
+                userService.getById(req.params.id)
+                    .then(user => user ? res.json(user) : res.sendStatus(404))
+                    .catch(err => next(err));
+
+            } else {
+                throw 'Not an Admin'
+            }
+        })
+
+
 }
