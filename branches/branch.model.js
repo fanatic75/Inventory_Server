@@ -10,7 +10,7 @@ const schema = new Schema({
         type:String
     },
     products:[
-        { type:mongoose.Schema.Types.ObjectId,ref:'Products'}
+        { type:mongoose.Schema.Types.ObjectId,ref:'Product'}
     ],
     users:[
         {type:mongoose.Schema.Types.ObjectId,ref:'User'}
@@ -18,6 +18,11 @@ const schema = new Schema({
 },{
     timestamps:true
 });
-
+schema.pre('remove',function(next){
+    
+     this.model('User').deleteMany({branch:this._id},next);
+     this.model('Product').deleteMany({branch:this._id},next);
+     
+});
 
 module.exports = mongoose.model('Branch', schema);

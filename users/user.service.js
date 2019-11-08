@@ -31,7 +31,9 @@ async function authenticate({
         const token = jwt.sign({
             sub: user.id,
             role: user.role
-        }, config.secret);
+        }, config.secret, {
+            expiresIn: 60 * 60 * 24
+        });
         return {
             ...userWithoutHash,
             token
@@ -66,21 +68,14 @@ async function create(userParam) {
 
     const user = new User(userParam);
     const branch = await Branch.findById(userParam.branch);
-
     // hash password
     if (userParam.password) {
         user.hash = bcrypt.hashSync(userParam.password, 10);
     }
 
     if (branch) {
+        addEmployee(branch, user);
 
-        user.branch = branch._id;
-        branch.users.push(user);
-
-        // save branch
-        await branch.save();
-        // save user
-        await user.save();
         return;
     }
     throw 'branch not found';
@@ -106,15 +101,12 @@ async function update(id, userParam) {
 
             if (branch) {
                 //remove the user from old branch
-                const oldBranch = await Branch.findById(user.branch);
-                if (oldBranch && oldBranch.users) {
-                    await oldBranch.users.pull(user._id);
-                    await oldBranch.save();
-                }
+                const oldBranch = await Branch.findById(user.branch)
+                removeEmployee(oldBranch, user);
 
-                user.branch = branch._id;
+
                 //add user to the new branch
-                addEmployee(branch._id, user._id);
+                addEmployee(branch, user);
             }
         } else {
             throw 'Updated Branch cannot be the same as old Branch.';
@@ -134,19 +126,23 @@ async function update(id, userParam) {
 async function _delete(id) {
     const user = await User.findById(id);
     const branch = await Branch.findById(user.branch);
-    if (branch && branch.users && user) {
-        await branch.users.pull(id);
-        await branch.save();
-
-    }
+    removeEmployee(branch, user);
     await User.findByIdAndRemove(id);
 }
 
-async function addEmployee(branchId, userId) {
-    const branch = await Branch.findById(branchId);
-    const user = await User.findById(userId);
+async function addEmployee(branch, user) {
+
     if (branch && user) {
+        user.branch = branch._id;
         branch.users.push(user);
+        await branch.save();
+        await user.save();
+    }
+
+}
+async function removeEmployee(branch, user) {
+    if (branch && branch.users) {
+        await branch.users.pull(user._id);
         await branch.save();
     }
 

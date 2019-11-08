@@ -22,21 +22,13 @@ async function getById(id) {
 
 
 async function getAllProducts(id) {
-    return await Branch.findById(id).select('products');
+    return await Branch.findById(id).select('products').populate('products');
 }
 
 async function getAllEmployees(id) {
-    const branch = await Branch.findById(id).select('users');
-
-    if (branch && branch.users) {
-
-
-        return Promise.all(branch.users.map(async (userId) => {
-            const user = await User.findById(userId);
-            return user;
-        }));
-
-    }
+    return await Branch.findById(id).select('users').populate('users','-hash');
+    
+  
 
 
 }
@@ -85,11 +77,12 @@ async function update(id, branchParam) {
 
 
 async function _delete(id) {
-    const branch = await Branch.findById(id);
-    if (branch && branch.users) {
-        branch.users.map(async (id) => {
-            await User.findByIdAndRemove(id);
-        })
+   const branch=await Branch.findById(id);
+    if(branch){
+        await branch.remove();
+        return;
     }
-    await Branch.findByIdAndRemove(id);
+    throw "No Branch Found"
+
+   
 }

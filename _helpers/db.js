@@ -5,5 +5,6 @@ mongoose.Promise = global.Promise;
 
 module.exports = {
     User: require('../users/user.model'),
-    Branch:require('../branches/branch.model')
+    Branch:require('../branches/branch.model'),
+    Product:require('../products/product.model')
 };
