@@ -1,5 +1,4 @@
 const db = require('_helpers/db');
-const User = db.User;
 const Branch = db.Branch;
 
 module.exports = {
@@ -46,8 +45,9 @@ async function create(branchParam) {
     const branch = new Branch(branchParam);
 
 
-    // save user
+    // save branch
     await branch.save();
+    return branch;
 }
 
 
@@ -69,6 +69,7 @@ async function update(id, branchParam) {
     Object.assign(branch, branchParam);
 
     await branch.save();
+    return branch;
 }
 
 

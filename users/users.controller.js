@@ -8,6 +8,7 @@ router.post('/register', register);
 router.get('/', getAll);
 router.put('/:id', update);
 router.delete('/:id', _delete);
+router.post('/token/:id',refreshToken);
 
 
 
@@ -31,7 +32,7 @@ function register(req, res, next) {
         .then((result) => {
             if (result) {
                 userService.create(req.body)
-                    .then(() => res.json({message:"User Created"}))
+                .then(user => user ? res.json(user) : res.sendStatus(404))
                     .catch(err => next(err));
 
             } else {
@@ -60,7 +61,7 @@ function getAll(req, res, next) {
         .then((result) => {
             if (result) {
                 userService.getAll()
-                    .then(users => res.json(users))
+                .then(users => users ? res.json(users) : res.sendStatus(404))
                     .catch(err => next(err));
             } else {
                 throw "Not an Admin"
@@ -75,7 +76,7 @@ function update(req, res, next) {
         .then((result) => {
             if (result) {
                 userService.update(req.params.id, req.body)
-                    .then(() => res.json({message:"user updated"}))
+                .then(user => user ? res.json(user) : res.sendStatus(404))
                     .catch(err => next(err));
             } else {
                 throw "Not an Admin"
@@ -89,7 +90,7 @@ function _delete(req, res, next) {
         .then((result) => {
             if (result) {
                 userService.delete(req.params.id)
-                    .then(() => res.json({}))
+                    .then(() => res.json({message:"User Deleted"}))
                     .catch(err => next(err));
             } else {
                 throw "Not an Admin"
@@ -115,4 +116,10 @@ function getById(req, res, next) {
         })
 
 
+}
+
+function refreshToken(req,res,next){
+    userService.refreshToken(req.params.id,req.body)
+        .then(token=>token?res.json(token):res.sendStatus(404))
+        .catch(err=>next(err));
 }

@@ -1,7 +1,7 @@
 {
     "name": "inventory_server_management_system",
     "version": "0.1.0",
-    "author":"Prateek Banga",
+    "author": "Prateek Banga",
     "description": "Inventory Server Management System ",
     "license": "MIT",
     "repository": {
@@ -11,7 +11,7 @@
     "scripts": {
         "start": "node ./server.js",
         "start-dev": "nodemon ./server.js",
-        "start-debug":"node --inspect ./server.js"
+        "start-debug": "nodemon --inspect ./server.js"
     },
     "dependencies": {
         "bcryptjs": "^2.4.3",
@@ -25,6 +25,8 @@
         "rootpath": "^0.1.2"
     },
     "devDependencies": {
+        "eslint": "^6.6.0",
+        "eslint-plugin-security": "^1.4.0",
         "nodemon": "^1.19.1"
     }
 }

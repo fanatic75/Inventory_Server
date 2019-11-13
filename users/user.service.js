@@ -11,6 +11,7 @@ module.exports = {
     getById,
     create,
     update,
+    refreshToken,
     delete: _delete
 };
 
@@ -29,14 +30,18 @@ async function authenticate({
             ...userWithoutHash
         } = user.toObject();
         const token = jwt.sign({
-            sub: user.id,
+            sub: user._id,
             role: user.role
-        }, config.secret, {
-            expiresIn: 60 * 60 * 24
+        }, config.secretToken, {
+            expiresIn: config.secretTokenLife
         });
+        const refreshToken=jwt.sign({sub:user._id,role:user.role},config.secretRefreshToken,{expiresIn:config.secretRefreshTokenLife});
+        user.tokenHash=bcrypt.hashSync(refreshToken,config.secretTokenHash);
+        await user.save();
         return {
             ...userWithoutHash,
-            token
+            token,
+            refreshToken
         };
     }
 }
@@ -56,6 +61,9 @@ async function create(userParam) {
         })) {
         throw 'Username "' + userParam.username + '" is already taken';
     }
+    if(userParam.hash||userParam.tokenHash){
+        throw 'Hashes cannot be provided';
+    }
 
     //default branch name for role provided when creating an admin
     //branches will not be pushed for admin, so that they don't come under any branch employees.
@@ -64,22 +72,30 @@ async function create(userParam) {
             branchName: "Admin"
         });
     }
-
+    
 
     const user = new User(userParam);
     const branch = await Branch.findById(userParam.branch);
+
+    const refreshToken=jwt.sign({sub:user._id,role:user.role},config.secretRefreshToken,{expiresIn:config.secretRefreshTokenLife});
+
+    user.tokenHash=bcrypt.hashSync(refreshToken,config.secretTokenHash);
     // hash password
     if (userParam.password) {
-        user.hash = bcrypt.hashSync(userParam.password, 10);
+        user.hash = bcrypt.hashSync(userParam.password, config.secretPasswordHash);
     }
 
     if (branch) {
-        addEmployee(branch, user);
+        
+        return addEmployee(branch, user);
 
-        return;
     }
-    throw 'branch not found';
-
+    if(user.role==roles.User){
+        throw 'Branch Not Found';
+    }
+    
+    await user.save();
+    return user;
 
 }
 
@@ -106,7 +122,7 @@ async function update(id, userParam) {
 
 
                 //add user to the new branch
-                addEmployee(branch, user);
+               return  addEmployee(branch, user);
             }
         } else {
             throw 'Updated Branch cannot be the same as old Branch.';
@@ -121,6 +137,7 @@ async function update(id, userParam) {
     Object.assign(user, userParam);
 
     await user.save();
+    return user;
 }
 
 async function _delete(id) {
@@ -130,14 +147,33 @@ async function _delete(id) {
     await User.findByIdAndRemove(id);
 }
 
+
+async function refreshToken(id,userParam){
+    const user= await User.findById(id);
+    if(user&&bcrypt.compareSync(userParam.token,user.tokenHash)){
+        const token = jwt.sign({
+            sub: user._id,
+            role: user.role
+        }, config.secretToken, {
+            expiresIn: config.secretTokenLife
+        });
+        return {
+            token
+        }
+    }
+}
+
+
+
 async function addEmployee(branch, user) {
 
-    if (branch && user) {
+
         user.branch = branch._id;
         branch.users.push(user);
         await branch.save();
         await user.save();
-    }
+        return user;
+    
 
 }
 async function removeEmployee(branch, user) {

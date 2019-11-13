@@ -1,4 +1,9 @@
 ﻿{
     "connectionString": "mongodb://localhost/inventory_management",
-    "secret": "THIS IS USED TO SIGN AND VERIFY JWT TOKENS, REPLACE IT WITH YOUR OWN SECRET, IT CAN BE ANY STRING"
+    "secretToken": "THIS IS USED TO SIGN AND VERIFY JWT TOKENS, REPLACE IT WITH YOUR OWN SECRET, IT CAN BE ANY STRING",
+    "secretTokenLife": 86400,
+    "secretRefreshToken":"THIS IS USED TO SIGN AND VERIFY JWT TOKENS, REPLACE IT WITH YOUR OWN SECRET, IT CAN BE ANY STRING",
+    "secretRefreshTokenLife":2592000,
+    "secretPasswordHash":10,
+    "secretTokenHash":10
 }

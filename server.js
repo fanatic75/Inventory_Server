@@ -18,6 +18,8 @@ app.use('/users', require('./users/users.controller'));
 
 app.use('/branches',require('./branches/branch.controller'));
 
+
+app.use('/products',require('./products/product.controller'));
 // global error handler
 app.use(errorHandler);
 
