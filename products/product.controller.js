@@ -9,6 +9,7 @@ router.put('/:id', update);
 router.delete('/:id', _delete);
 router.get('/:id', getById);
 router.get('/',getAll);
+router.put('/:id/quantity',updateQuantity);
 
 module.exports = router;
 
@@ -109,4 +110,11 @@ function getById(req, res, next) {
 
 
 
+}
+
+
+function updateQuantity(req,res,next){
+    productService.soldAProduct(req.params.id,req.body.quantity)
+    .then((product)=>product ? res.json(product) : res.sendStatus(404))
+    .catch(err=>next(err));
 }

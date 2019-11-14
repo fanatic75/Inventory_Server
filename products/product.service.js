@@ -6,7 +6,9 @@ module.exports = {
     getById,
     create,
     update,
+    soldAProduct,
     delete: _delete,
+
 };
 
 async function getAll() {
@@ -20,23 +22,23 @@ async function getById(id) {
 
 async function create(productParam) {
     // validate
-    
+
 
     const product = new Product(productParam);
 
 
-    if ( productParam.branch && productParam.quantity) {
+    if (productParam.branch && productParam.quantity) {
 
         const branch = await Branch.findById(productParam.branch);
         if (branch) {
-            
-           return  addProduct(productParam.quantity, branch, product);
-                   
-                
-            
+
+            return addProduct(productParam.quantity, branch, product);
+
+
+
         }
         throw 'Branch not found';
-        
+
     }
     throw 'Branch and Quantity are required';
 
@@ -58,11 +60,11 @@ async function update(id, productParam) {
     }
 
 
-    if(productParam.branch){
+    if (productParam.branch) {
         throw 'branch cannot be updated. Delete the product and add a new product to that branch.';
     }
 
-    Object.assign(product,productParam);
+    Object.assign(product, productParam);
 
 
 
@@ -72,10 +74,24 @@ async function update(id, productParam) {
 }
 
 
+async function soldAProduct(id, quantityParam) {
+    const product = await Product.findById(id);
+    if (product) {
+        product.quantity = product.quantity - quantityParam;
+        if (product.quantity < 0)
+            throw 'Input is more than the stock quantity'
+        await product.save();
+        return product;
+    }
+
+}
+
+
+
 async function _delete(id) {
     const product = await Product.findById(id);
     if (product) {
-        const branch=await Branch.findById(product.branch);
+        const branch = await Branch.findById(product.branch);
         branch.products.pull(product._id);
         await branch.save();
         await product.remove();
