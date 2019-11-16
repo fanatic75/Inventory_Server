@@ -13,13 +13,11 @@ const schema = new Schema({
     },
     products: [{
         type: mongoose.Schema.Types.ObjectId,
-        trim: true,
         ref: 'Product'
     }],
     users: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        trim: true
     }]
 }, {
     timestamps: true

@@ -108,7 +108,7 @@ async function addProduct(quantity, branch, product) {
 
 
     try {
-        product.branch = branch;
+        product.branch = branch._id;
         product.quantity = quantity;
         branch.products.push(product);
         await product.save();
