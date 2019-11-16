@@ -112,9 +112,8 @@ async function update(id, userParam) {
     //if req has a branch to update
     if (userParam.branch) {
         //check if the update branch is not the same as old branch then no need to update
-        if (user.branch !== userParam.branch) {
+        if (user.branch != userParam.branch) {
             const branch = await Branch.findById(userParam.branch);
-
             if (branch) {
                 //remove the user from old branch
                 const oldBranch = await Branch.findById(user.branch)
