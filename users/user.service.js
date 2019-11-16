@@ -168,7 +168,7 @@ async function refreshToken(id,userParam){
 async function addEmployee(branch, user) {
 
 
-        user.branch = branch;
+        user.branch = branch._id;
         branch.users.push(user);
         await branch.save();
         await user.save();
