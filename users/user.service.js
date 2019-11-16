@@ -124,9 +124,9 @@ async function update(id, userParam) {
                 //add user to the new branch
                return  addEmployee(branch, user);
             }
-        } else {
+        } 
             throw 'Updated Branch cannot be the same as old Branch.';
-        }
+        
     }
     // hash password if it was entered
     if (userParam.password) {
