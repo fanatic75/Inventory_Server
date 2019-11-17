@@ -6,7 +6,7 @@ module.exports = {
     getById,
     create,
     update,
-    soldAProduct,
+    soldProducts,
     delete: _delete,
 
 };
@@ -74,18 +74,34 @@ async function update(id, productParam) {
 }
 
 
-async function soldAProduct(id, quantityParam) {
-    const product = await Product.findById(id);
-    if (product) {
-        product.quantity = product.quantity - quantityParam;
-        if (product.quantity < 0)
-            throw 'Input is more than the stock quantity'
-        await product.save();
-        return product;
-    }
+async function soldProducts(orders) {
+    const ops = orders.map(function (order) {
+        return {
+            "updateOne": {
+                "filter": {
+                    "_id": order._id,
+
+                },
+                "update": {
+                    "$set": {
+                        "quantity": order.quantity
+                    }
+                }
+            }
+        }
+    });
+
+    return await Product.bulkWrite(ops).then(
+        (r) => {
+            return (r.modifiedCount);
+        }
+
+    ).catch((e) => {
+        console.log(e);
+    });
+
 
 }
-
 
 
 async function _delete(id) {

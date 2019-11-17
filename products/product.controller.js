@@ -8,8 +8,8 @@ router.post('/register', register);
 router.put('/:id', update);
 router.delete('/:id', _delete);
 router.get('/:id', getById);
-router.get('/',getAll);
-router.put('/:id/quantity',updateQuantity);
+router.get('/', getAll);
+router.post('/avs', soldProducts);
 
 module.exports = router;
 
@@ -72,9 +72,9 @@ function update(req, res, next) {
         .then((result) => {
             if (result) {
                 productService.update(req.params.id, req.body)
-                    .then((result) =>{
-                        if(result)
-                        res.json(result);
+                    .then((result) => {
+                        if (result)
+                            res.json(result);
                         return;
                     })
                     .catch(err => next(err));
@@ -113,8 +113,10 @@ function getById(req, res, next) {
 }
 
 
-function updateQuantity(req,res,next){
-    productService.soldAProduct(req.params.id,req.body.quantity)
-    .then((product)=>product ? res.json(product) : res.sendStatus(404))
-    .catch(err=>next(err));
+function soldProducts(req, res, next) {
+    productService.soldProducts(req.body.orders)
+        .then((modifiedProducts) => modifiedProducts?res.json({
+            message: 'Sold '+modifiedProducts+' products',
+        }):res.sendStatus(404))
+        .catch(err => next(err));
 }
