@@ -9,7 +9,7 @@ router.get('/', getAll);
 router.put('/:id', update);
 router.delete('/:id', _delete);
 router.post('/token/:id',refreshToken);
-
+router.get('/admins',getAllAdmins)
 
 
 router.get('/current', getCurrent);
@@ -61,6 +61,21 @@ function getAll(req, res, next) {
         .then((result) => {
             if (result) {
                 userService.getAll()
+                .then(users => users ? res.json(users) : res.sendStatus(404))
+                    .catch(err => next(err));
+            } else {
+                throw "Not an Admin"
+            }
+        })
+        .catch(err => next(err));
+}
+
+function getAllAdmins(req, res, next) {
+
+    adminService.isAdmin(req.user)
+        .then((result) => {
+            if (result) {
+                userService.getAllAdmins()
                 .then(users => users ? res.json(users) : res.sendStatus(404))
                     .catch(err => next(err));
             } else {

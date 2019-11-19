@@ -12,6 +12,7 @@ module.exports = {
     create,
     update,
     refreshToken,
+    getAllAdmins,
     delete: _delete
 };
 
@@ -35,8 +36,9 @@ async function authenticate({
         }, config.secretToken, {
             expiresIn: config.secretTokenLife
         });
+        console.log(config.secretTokenLife)
+        console.log(config.secretRefreshTokenLife);
         const refreshToken=jwt.sign({sub:user._id,role:user.role},config.secretRefreshToken,{expiresIn:config.secretRefreshTokenLife});
-        user.tokenHash=bcrypt.hashSync(refreshToken,config.secretTokenHash);
         await user.save();
         return {
             ...userWithoutHash,
@@ -48,6 +50,10 @@ async function authenticate({
 
 async function getAll() {
     return await User.find().select('-hash');
+}
+
+async function getAllAdmins(){
+    return await User.find({role:'Admin'})
 }
 
 async function getById(id) {
@@ -77,9 +83,8 @@ async function create(userParam) {
     const user = new User(userParam);
     const branch = await Branch.findById(userParam.branch);
 
-    const refreshToken=jwt.sign({sub:user._id,role:user.role},config.secretRefreshToken,{expiresIn:config.secretRefreshTokenLife});
 
-    user.tokenHash=bcrypt.hashSync(refreshToken,config.secretTokenHash);
+    
     // hash password
     if (userParam.password) {
         user.hash = bcrypt.hashSync(userParam.password, config.secretPasswordHash);
@@ -104,6 +109,8 @@ async function update(id, userParam) {
 
     // validate
     if (!user) throw 'User not found';
+    if(userParam.hash)
+        throw 'Hash cannot be provided';
     if (user.username !== userParam.username && await User.findOne({
             username: userParam.username
         })) {
@@ -149,7 +156,7 @@ async function _delete(id) {
 
 async function refreshToken(id,userParam){
     const user= await User.findById(id);
-    if(user&&bcrypt.compareSync(userParam.token,user.tokenHash)){
+    if(jwt.verify(userParam.token,config.secretRefreshToken)){
         const token = jwt.sign({
             sub: user._id,
             role: user.role
