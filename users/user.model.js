@@ -12,10 +12,6 @@ const schema = new Schema({
         type: String,
         required: true
     },
-    tokenHash: {
-        type: String,
-        required: true
-    },
     firstName: {
         type: String,
         trim: true
