@@ -8,10 +8,9 @@ router.post('/register', register);
 router.get('/', getAll);
 router.put('/:id', update);
 router.delete('/:id', _delete);
-router.get('/current', getCurrent);
 router.get('/:id', getById);
-router.get('/products/:id', getAllProducts);                     //branch_id 
-router.get('/employees/:id', getAllEmployees);
+router.get('/:id/products', getAllProducts); //branch_id 
+router.get('/:id/employees', getAllEmployees);
 module.exports = router;
 
 
@@ -25,7 +24,13 @@ function register(req, res, next) {
             if (result) {
                 //branch service
                 branchService.create(req.body)
-                    .then(() => res.json({message:"branch created"}))
+                    .then((result) => {
+                        if (result) {
+                            res.json(result)
+                            return;
+                        }
+                        throw 'Some error occured while registering a Branch';
+                    })
                     .catch(err => next(err));
             } else {
                 throw "Not an admin."
@@ -38,16 +43,6 @@ function register(req, res, next) {
 
 
 
-function getCurrent(req, res, next) {
-    //no need for admin
-
-    //branch service
-    branchService.getById(req.params.id)
-        .then(branch => branch ? res.json(branch) : res.sendStatus(404))
-        .catch(err => next(err));
-
-}
-
 
 
 
@@ -58,7 +53,13 @@ function getAll(req, res, next) {
             if (result) {
                 //branch service
                 branchService.getAll()
-                    .then(branch => res.json(branch))
+                    .then(branches => {
+                        if(branches){
+                            res.json(branches);
+                            return;
+                        }
+                        throw 'Some error occured while getting branches';
+                    })
                     .catch(err => next(err));
             } else {
                 throw "Not an Admin"
@@ -71,7 +72,7 @@ function getAllProducts(req, res, next) {
     //no need for admin
     //branch service
 
-    branchService.getAllProducts(req.user.sub)
+    branchService.getAllProducts(req.params.id)
         .then(products => products ? res.json(products) : res.sendStatus(404))
         .catch(err => next(err));
 }
@@ -99,7 +100,13 @@ function update(req, res, next) {
             if (result) {
                 //branch service
                 branchService.update(req.params.id, req.body)
-                    .then(() => res.json({message:"branch updated"}))
+                    .then((branch) => {
+                        if(branch){
+                            res.json(branch);
+                            return;
+                        }
+                        throw 'Some error occured while updating branch';
+                    })
                     .catch(err => next(err));
             } else {
                 throw "Not an Admin"
@@ -113,7 +120,9 @@ function _delete(req, res, next) {
         .then((result) => {
             if (result) {
                 branchService.delete(req.params.id)
-                    .then(() => res.json({"message":"branch deleted"}))
+                    .then(() => res.json({
+                        "message": "branch deleted"
+                    }))
                     .catch(err => next(err));
             } else {
                 throw "Not an Admin"
@@ -125,19 +134,11 @@ function _delete(req, res, next) {
 
 
 function getById(req, res, next) {
-    adminService.isAdmin(req.user)
-        .then((result) => {
-            if (result) {
 
-                branchService.getById(req.params.id)
-                    .then(user => user ? res.json(user) : res.sendStatus(404))
-                    .catch(err => next(err));
 
-            } else {
-                throw 'Not an Admin'
-            }
-        })
-
+    branchService.getById(req.params.id)
+        .then(branch => branch ? res.json(branch) : res.sendStatus(404))
         .catch(err => next(err));
+
 
 }

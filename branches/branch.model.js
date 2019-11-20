@@ -1,22 +1,45 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-
 const schema = new Schema({
-    branchName : {
+    branchName: {
         type: String,
-        unique:true 
+        unique: true,
+        trim: true,
+        required: true
     },
-    address:{
-        type:String
+    address: {
+        trim: true,
+        type: String
     },
-    products:[
-        { type:mongoose.Schema.Types.ObjectId,ref:'Products'}
-    ],
-    users:[
-        {type:mongoose.Schema.Types.ObjectId,ref:'User'}
-    ]
-},{
-    timestamps:true
+    products: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Product'
+    }],
+    users: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    }]
+}, {
+    timestamps: true
+});
+schema.pre('remove', function (next) {
+
+    this.model('User').deleteMany({
+        branch: this._id
+    }, next);
+
+
+
+});
+
+schema.pre('remove', function (next) {
+
+    this.model('Product').deleteMany({
+        branch: this._id
+    }, next);
+
+
+
 });
 
 

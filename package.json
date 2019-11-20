@@ -1,16 +1,17 @@
 {
-    "name": "node-mongo-registration-login-api",
-    "version": "1.0.0",
-    "description": "NodeJS + MongoDB API for User Management, Authentication and Registration",
+    "name": "inventory_server_management_system",
+    "version": "0.1.0",
+    "author": "Prateek Banga",
+    "description": "Inventory Server Management System ",
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/cornflourblue/node-mongo-registration-login-api.git"
+        "url": "https://github.com/fanatic75/Inventory_Server.git"
     },
     "scripts": {
         "start": "node ./server.js",
         "start-dev": "nodemon ./server.js",
-        "start-debug":"node --inspect ./server.js"
+        "start-debug": "nodemon --inspect ./server.js"
     },
     "dependencies": {
         "bcryptjs": "^2.4.3",
@@ -18,12 +19,15 @@
         "cors": "^2.8.4",
         "express": "^4.17.1",
         "express-jwt": "^5.3.1",
+        "express-rate-limit": "^5.0.0",
         "jsonwebtoken": "^8.5.1",
         "mongodb": "^3.2.7",
         "mongoose": "^5.6.9",
         "rootpath": "^0.1.2"
     },
     "devDependencies": {
+        "eslint": "^6.6.0",
+        "eslint-plugin-security": "^1.4.0",
         "nodemon": "^1.19.1"
     }
 }

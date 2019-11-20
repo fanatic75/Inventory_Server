@@ -11,6 +11,8 @@ module.exports = {
     getById,
     create,
     update,
+    refreshToken,
+    getAllAdmins,
     delete: _delete
 };
 
@@ -29,18 +31,29 @@ async function authenticate({
             ...userWithoutHash
         } = user.toObject();
         const token = jwt.sign({
-            sub: user.id,
+            sub: user._id,
             role: user.role
-        }, config.secret);
+        }, config.secretToken, {
+            expiresIn: config.secretTokenLife
+        });
+        console.log(config.secretTokenLife)
+        console.log(config.secretRefreshTokenLife);
+        const refreshToken=jwt.sign({sub:user._id,role:user.role},config.secretRefreshToken,{expiresIn:config.secretRefreshTokenLife});
+        await user.save();
         return {
             ...userWithoutHash,
-            token
+            token,
+            refreshToken
         };
     }
 }
 
 async function getAll() {
     return await User.find().select('-hash');
+}
+
+async function getAllAdmins(){
+    return await User.find({role:'Admin'})
 }
 
 async function getById(id) {
@@ -54,6 +67,9 @@ async function create(userParam) {
         })) {
         throw 'Username "' + userParam.username + '" is already taken';
     }
+    if(userParam.hash||userParam.tokenHash){
+        throw 'Hashes cannot be provided';
+    }
 
     //default branch name for role provided when creating an admin
     //branches will not be pushed for admin, so that they don't come under any branch employees.
@@ -62,29 +78,29 @@ async function create(userParam) {
             branchName: "Admin"
         });
     }
-
+    
 
     const user = new User(userParam);
     const branch = await Branch.findById(userParam.branch);
 
+
+    
     // hash password
     if (userParam.password) {
-        user.hash = bcrypt.hashSync(userParam.password, 10);
+        user.hash = bcrypt.hashSync(userParam.password, config.secretPasswordHash);
     }
 
     if (branch) {
+        
+        return addEmployee(branch, user);
 
-        user.branch = branch._id;
-        branch.users.push(user);
-
-        // save branch
-        await branch.save();
-        // save user
-        await user.save();
-        return;
     }
-    throw 'branch not found';
-
+    if(user.role==roles.User){
+        throw 'Branch Not Found';
+    }
+    
+    await user.save();
+    return user;
 
 }
 
@@ -93,6 +109,8 @@ async function update(id, userParam) {
 
     // validate
     if (!user) throw 'User not found';
+    if(userParam.hash)
+        throw 'Hash cannot be provided';
     if (user.username !== userParam.username && await User.findOne({
             username: userParam.username
         })) {
@@ -101,24 +119,20 @@ async function update(id, userParam) {
     //if req has a branch to update
     if (userParam.branch) {
         //check if the update branch is not the same as old branch then no need to update
-        if (user.branch !== userParam.branch) {
+        if (user.branch != userParam.branch) {
             const branch = await Branch.findById(userParam.branch);
-
             if (branch) {
                 //remove the user from old branch
-                const oldBranch = await Branch.findById(user.branch);
-                if (oldBranch && oldBranch.users) {
-                    await oldBranch.users.pull(user._id);
-                    await oldBranch.save();
-                }
+                const oldBranch = await Branch.findById(user.branch)
+                removeEmployee(oldBranch, user);
 
-                user.branch = branch._id;
+
                 //add user to the new branch
-                addEmployee(branch._id, user._id);
+               return  addEmployee(branch, user);
             }
-        } else {
+        } 
             throw 'Updated Branch cannot be the same as old Branch.';
-        }
+        
     }
     // hash password if it was entered
     if (userParam.password) {
@@ -129,24 +143,48 @@ async function update(id, userParam) {
     Object.assign(user, userParam);
 
     await user.save();
+    return user;
 }
 
 async function _delete(id) {
     const user = await User.findById(id);
     const branch = await Branch.findById(user.branch);
-    if (branch && branch.users && user) {
-        await branch.users.pull(id);
-        await branch.save();
-
-    }
+    removeEmployee(branch, user);
     await User.findByIdAndRemove(id);
 }
 
-async function addEmployee(branchId, userId) {
-    const branch = await Branch.findById(branchId);
-    const user = await User.findById(userId);
-    if (branch && user) {
+
+async function refreshToken(id,userParam){
+    const user= await User.findById(id);
+    if(jwt.verify(userParam.token,config.secretRefreshToken)){
+        const token = jwt.sign({
+            sub: user._id,
+            role: user.role
+        }, config.secretToken, {
+            expiresIn: config.secretTokenLife
+        });
+        return {
+            token
+        }
+    }
+}
+
+
+
+async function addEmployee(branch, user) {
+
+
+        user.branch = branch._id;
         branch.users.push(user);
+        await branch.save();
+        await user.save();
+        return user;
+    
+
+}
+async function removeEmployee(branch, user) {
+    if (branch && branch.users) {
+        await branch.users.pull(user._id);
         await branch.save();
     }
 
